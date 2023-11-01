@@ -1,66 +1,56 @@
-// ProductManager.js
+const express = require('express');
 const fs = require('fs');
 
-class ProductManager {
-  constructor(filePath) {
-    this.path = filePath;
-    this.currentId = 1;
+const productsRouter = express.Router();
+const productsFile = 'productos.json';
+
+productsRouter.use((req, res, next) => {
+  try {
+    const data = fs.readFileSync(productsFile, 'utf-8');
+    req.productsData = JSON.parse(data);
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cargar productos' });
   }
+});
 
-  addProduct(product) {
-    let products = this.loadProducts();
 
-    product.id = this.currentId++;
+productsRouter.get('/', (req, res) => {
+  const limit = req.query.limit;
+  const products = limit ? req.productsData.slice(0, limit) : req.productsData;
+  res.json({ products });
+});
 
-    products.push(product);
-
-    this.saveProducts(products);
+productsRouter.get('/:pid', (req, res) => {
+  const product = req.productsData.find((p) => p.id === req.params.pid);
+  if (product) {
+    res.json({ product });
+  } else {
+    res.status(404).json({ error: 'Producto no encontrado' });
   }
+});
 
-  getProducts() {
-    return this.loadProducts();
-  }
 
-  getProductById(id) {
-    const products = this.loadProducts();
-    const product = products.find((p) => p.id === id);
-    return product;
-  }
+productsRouter.post('/', (req, res) => {
+  const newProduct = req.body;
 
-  updateProduct(id, updatedProduct) {
-    let products = this.loadProducts();
+  res.json({ message: 'Producto agregado correctamente' });
+});
 
-    const index = products.findIndex((p) => p.id === id);
 
-    if (index !== -1) {
-      products[index] = { ...products[index], ...updatedProduct };
+productsRouter.put('/:pid', (req, res) => {
+  const productId = req.params.pid;
+  const updatedProduct = req.body;
 
-      this.saveProducts(products);
-    }
-  }
+  res.json({ message: 'Producto actualizado correctamente' });
+});
 
-  deleteProduct(id) {
-    let products = this.loadProducts();
 
-    products = products.filter((p) => p.id !== id);
+productsRouter.delete('/:pid', (req, res) => {
+  const productId = req.params.pid;
 
-    this.saveProducts(products);
-  }
+  res.json({ message: 'Producto eliminado correctamente' });
+});
 
-  loadProducts() {
-    try {
-      const data = fs.readFileSync(this.path, 'utf-8');
-      if (data) {
-        return JSON.parse(data);
-      }
-    } catch (error) {
-      return [];
-    }
-  }
-
-  saveProducts(products) {
-    fs.writeFileSync(this.path, JSON.stringify(products, null, 2));
-  }
-}
-
-module.exports = ProductManager;
+module.exports = productsRouter;
