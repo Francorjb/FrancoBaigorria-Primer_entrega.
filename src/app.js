@@ -1,44 +1,38 @@
-// const express = require('express');
-// const ProductManager = require('/productManager.js'); 
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const exphbs  = require('express-handlebars');
+const socketIO = require('socket.io');
 
-// const app = express();
-// const port = 3000;
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server);
 
-// const manager = new ProductManager('products.json');
+app.engine('handlebars', exphbs());
+app.set('view engine', 'handlebars');
 
-// app.get('/products', async (req, res) => {
-//   try {
-//     const limit = req.query.limit;
-//     const products = await manager.getProducts();
+app.use(express.static(path.join(__dirname, 'public')));
 
-//     if (limit) {
-//       const limitedProducts = products.slice(0, limit);
-//       res.json({ products: limitedProducts });
-//     } else {
-//       res.json({ products });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Error al obtener productos' });
-//   }
-// });
+app.get('/', (req, res) => {
+    res.render('home');
+});
 
-// app.get('/products/:pid', async (req, res) => {
-//   try {
-//     const pid = parseInt(req.params.pid);
-//     const product = await manager.getProductById(pid);
+app.get('/realtimeproducts', (req, res) => {
+    res.render('realTimeProducts');
+});
 
-//     if (product) {
-//       res.json({ product });
-//     } else {
-//       res.status(404).json({ error: 'Producto no encontrado' });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Error al obtener el producto' });
-//   }
-// });
+io.on('connection', (socket) => {
+    console.log('Usuario conectado');
+    socket.on('nuevoProducto', (producto) => {
+        io.emit('actualizarProductos', producto);
+    });
 
-// app.listen(port, () => {
-//   console.log(`Servidor Express escuchando en el puerto ${port}`);
-// });
+    socket.on('eliminarProducto', (productoId) => {
+        io.emit('actualizarProductos', productoId);
+    });
+});
+
+
+server.listen(3000, () => {
+    console.log('Servidor corriendo en el puerto 3000');
+});
