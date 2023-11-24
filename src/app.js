@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const exphbs  = require('express-handlebars');
 const socketIO = require('socket.io');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,4 +36,16 @@ io.on('connection', (socket) => {
 
 server.listen(3000, () => {
     console.log('Servidor corriendo en el puerto 3000');
+});
+
+
+mongoose.connect('./', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'Error de conexión a MongoDB:'));
+db.once('open', () => {
+    console.log('Conexión exitosa a MongoDB');
 });
