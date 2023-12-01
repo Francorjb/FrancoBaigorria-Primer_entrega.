@@ -4,6 +4,9 @@ const path = require('path');
 const exphbs  = require('express-handlebars');
 const socketIO = require('socket.io');
 const mongoose = require('mongoose');
+const productRouter = require('./routes/productRouter');
+const cartRouter = require('./routes/cartRouter');
+const viewRouter = require('./routes/viewRouter');
 
 const app = express();
 const server = http.createServer(app);
@@ -49,3 +52,15 @@ db.on('error', console.error.bind(console, 'Error de conexión a MongoDB:'));
 db.once('open', () => {
     console.log('Conexión exitosa a MongoDB');
 });
+
+app.use('/api/products', productRouter);
+app.use('/api/carts', cartRouter);
+app.use('/views', viewRouter);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
+
+app.engine('handlebars', exphbs());
+app.set('view engine', 'handlebars');
